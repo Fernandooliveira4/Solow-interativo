@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Solow interativo</title>
+<style>
+:root{--bg:#fbfbf9;--fg:#1f2328;--mut:#5f6670;--line:#d8dbe0;--is:#5b4fc7;--lm:#c4491f;--bp:#17805a;--card:#fff;--sel:#eceaf9}
+@media(prefers-color-scheme:dark){:root{--bg:#16181c;--fg:#e8eaed;--mut:#9aa1ab;--line:#33373e;--is:#9d94f0;--lm:#f08a63;--bp:#55c793;--card:#1d2025;--sel:#2c2a48}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1080px;margin:0 auto;padding:24px 16px;display:grid;gap:24px;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr)}
+@media(max-width:800px){main{grid-template-columns:1fr}}
+h1{font-size:22px;margin:0 0 4px}
+h2{font-size:15px;margin:16px 0 6px}
+p{margin:0;color:var(--mut);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}
+.card p{margin-top:6px}
+.row{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:8px;font-size:14px;margin:8px 0}
+.row input{grid-column:1/3;width:100%}
+output{font-variant-numeric:tabular-nums;color:var(--mut)}
+button{font:inherit;font-size:14px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--is);outline-offset:2px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--card)}
+.seg label{position:relative;flex:1;text-align:center;font-size:13px;padding:6px 4px;cursor:pointer;border-left:1px solid var(--line)}
+.seg label:first-child{border-left:0}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--sel);font-weight:600}
+.seg label:has(input:focus-visible){outline:2px solid var(--is);outline-offset:-2px}
+.note{font-size:13px;margin-top:6px}
+.tabs{margin:12px 0 4px}
+.leg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--mut);margin-bottom:8px}
+.leg svg{vertical-align:middle;margin-right:4px}
+.warn b{color:var(--lm)}
+svg text{fill:var(--fg);font-size:13px}
+.ax{stroke:var(--mut)}
+.grid{stroke:var(--line);stroke-width:.5}
+.c-s{stroke:var(--is)}.c-r{stroke:var(--lm)}.c-f{stroke:var(--mut)}.c-h{stroke:var(--bp)}.c-g{stroke:var(--fg)}
+.w{stroke-width:2.5}.w1{stroke-width:1.5}
+.d{stroke-dasharray:5 4;opacity:.6;stroke-width:1.5}
+.dot{stroke-dasharray:1 5;stroke-linecap:round;stroke-width:2.5}
+.drop{stroke:var(--mut);stroke-dasharray:2 3;stroke-width:1}
+.br{stroke:var(--fg);stroke-width:1.5}
+.p0{fill:var(--card);stroke:var(--mut);stroke-width:1.5}
+.p1{fill:var(--fg)}
+.pg{fill:var(--card);stroke:var(--fg);stroke-width:2}
+</style>
+</head>
+<body>
+<main>
+<section>
+<h1>Modelo de Solow</h1>
+<p id="hint"></p>
+<div class="seg tabs" role="radiogroup" aria-label="Visualização">
+<label><input type="radio" name="tab" value="dia" checked>Diagrama</label>
+<label><input type="radio" name="tab" value="ouro">Regra de ouro</label>
+<label><input type="radio" name="tab" value="conv">Convergência</label>
+</div>
+<div class="card" id="res"></div>
+<div id="v_dia"><svg id="sv_dia" viewBox="0 0 680 364" width="100%" role="img" aria-label="Diagrama do modelo de Solow"></svg><div class="leg" id="leg_dia"></div></div>
+<div id="v_ouro" hidden><svg id="sv_ouro" viewBox="0 0 680 364" width="100%" role="img" aria-label="Consumo de estado estacionário em função da taxa de poupança"></svg><div class="leg" id="leg_ouro"></div></div>
+<div id="v_conv" hidden><svg id="sv_conv1" viewBox="0 0 680 300" width="100%" role="img" aria-label="Logaritmo da renda por trabalhador dos países A e B ao longo do tempo"></svg><svg id="sv_conv2" viewBox="0 0 680 260" width="100%" role="img" aria-label="Taxa de crescimento da renda por trabalhador dos países A e B"></svg><div class="leg" id="leg_conv"></div></div>
+</section>
+<aside>
+<h2 id="h_mode">Versão do modelo</h2>
+<div class="seg" role="radiogroup" aria-labelledby="h_mode">
+<label><input type="radio" name="mode" value="bas">Básico</label>
+<label><input type="radio" name="mode" value="tec" checked>Com tecnologia</label>
+<label><input type="radio" name="mode" value="hc">Capital humano</label>
+</div>
+<p class="note" id="modenote"></p>
+<div id="ctl"></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+<button id="fix">Fixar ponto de partida</button>
+<button id="rst">Restaurar padrão</button>
+</div>
+</aside>
+</main>
+<script>
+// [id, rótulo, mín, máx, passo, padrão, formato, versões em que aparece, abas em que aparece]; cabeçalhos: [título, versões, abas]
+const CFG=[["Produção e acumulação","",""],
+["a","Participação do capital físico (α)",0.1,0.6,0.01,0.33,"d","",""],
+["s","Taxa de poupança (s)",0.02,0.6,0.01,0.2,"p","",""],
+["n","Crescimento populacional (n)",-0.01,0.05,0.001,0.01,"p","",""],
+["d","Depreciação (δ)",0.02,0.15,0.005,0.05,"p","",""],
+["g","Progresso técnico (g)",0,0.05,0.001,0.02,"p","tec hc",""],
+["Capital humano","hc",""],
+["b","Participação do capital humano (β)",0.05,0.5,0.01,0.3,"d","hc",""],
+["sh","Poupança em capital humano (sₕ)",0.02,0.35,0.01,0.15,"p","hc",""],
+["dh","Depreciação do capital humano (δₕ)",0.02,0.15,0.005,0.05,"p","hc",""],
+["País B","","conv"],
+["sB","Poupança de B (s)",0.02,0.6,0.01,0.2,"p","","conv"],
+["shB","Poupança em capital humano de B (sₕ)",0.02,0.35,0.01,0.15,"p","hc","conv"],
+["nB","Crescimento populacional de B (n)",-0.01,0.05,0.001,0.01,"p","","conv"],
+["Ponto de partida da simulação","","conv"],
+["kA","Capital inicial de A (% do k* de A)",5,200,5,100,"%","","conv"],
+["kB","Capital inicial de B (% do k* de A)",5,200,5,30,"%","","conv"]];
+const LBL_HC={s:"Poupança em capital físico (sₖ)",d:"Depreciação do capital físico (δₖ)",sB:"Poupança em capital físico de B (sₖ)"};
+const MODEN={bas:"Y = K^α L^(1−α). Sem progresso técnico: no longo prazo a renda por trabalhador para de crescer.",
+  tec:"Y = K^α (AL)^(1−α), com A crescendo a g. Variáveis por trabalhador efetivo; no longo prazo a renda por trabalhador cresce a g.",
+  hc:"Y = K^α H^β (AL)^(1−α−β). O capital humano é acumulado como o físico: uma fração sₕ da produção vira H, que se deprecia a δₕ (Acemoglu, cap. 3)."};
+const HINT={dia:"Mexa nos controles. Tracejado é o ponto de partida e sólido, o resultado.",
+  ouro:"Consumo de estado estacionário para cada taxa de poupança. O pico da curva é a regra de ouro.",
+  conv:"Dois países com a mesma tecnologia (α, δ, g) partindo de níveis de capital diferentes. Ajuste o país B no painel."};
+const $=i=>document.getElementById(i);
+const def={},ids=[],fmts={};let html="";
+for(const c of CFG){
+  if(c.length==3){html+=`<h2 data-m="${c[1]}" data-t="${c[2]}">${c[0]}</h2>`;continue}
+  const [id,l,mn,mx,st,d,f,m,t]=c;def[id]=d;ids.push(id);fmts[id]=f;
+  html+=`<div class="row" data-m="${m}" data-t="${t}"><label for="${id}" id="l_${id}">${l}</label><output id="o_${id}"></output><input type="range" id="${id}" min="${mn}" max="${mx}" step="${st}" value="${d}"></div>`;
+}
+$("ctl").innerHTML=html;
+const LBL=Object.fromEntries(ids.map(i=>[i,$("l_"+i).textContent]));
+let base={...def};
+const rv=n=>document.querySelector(`input[name=${n}]:checked`).value;
+const read=()=>Object.fromEntries(ids.map(i=>[i,+$(i).value]));
+
+// ---------- modelo ----------
+// k̇ = sₖ·y − (n+g+δₖ)·k ;  ḣ = sₕ·y − (n+g+δₕ)·h ;  y = k^α·h^β  (variáveis por trabalhador efetivo)
+const BMAX=a=>0.9-a; // garante α+β < 1
+const core=(p,mode)=>{const hc=mode=="hc";return{a:p.a,b:hc?Math.min(p.b,BMAX(p.a)):0,sk:p.s,sh:hc?p.sh:0,n:p.n,g:mode=="bas"?0:p.g,dk:p.d,dh:hc?p.dh:p.d,hc}};
+const ss=c=>{const nk=c.n+c.g+c.dk,nh=c.n+c.g+c.dh;
+  const y=c.hc?Math.pow(Math.pow(c.sk,c.a)*Math.pow(c.sh,c.b)/(Math.pow(nk,c.a)*Math.pow(nh,c.b)),1/(1-c.a-c.b)):Math.pow(c.sk/nk,c.a/(1-c.a));
+  return{y,k:c.sk*y/nk,h:c.hc?c.sh*y/nh:1,c:(1-c.sk-c.sh)*y,nk,nh}};
+const prod=(c,k,h)=>Math.pow(k,c.a)*(c.hc?Math.pow(h,c.b):1);
+const deriv=(c,k,h)=>{const y=prod(c,k,h);return[c.sk*y-(c.n+c.g+c.dk)*k,c.hc?c.sh*y-(c.n+c.g+c.dh)*h:0]};
+// trajetória por Runge-Kutta 4; gy = crescimento da renda por trabalhador; lny = ln da renda por trabalhador (A₀ = 1)
+function sim(c,k,h,T,dt){const out=[];
+  for(let i=0;i*dt<=T+1e-9;i++){const t=i*dt,[a1,b1]=deriv(c,k,h),y=prod(c,k,h);
+    out.push({t,k,h,y,gy:c.g+c.a*a1/k+(c.hc?c.b*b1/h:0),lny:Math.log(y)+c.g*t});
+    const [a2,b2]=deriv(c,k+dt/2*a1,h+dt/2*b1),[a3,b3]=deriv(c,k+dt/2*a2,h+dt/2*b2),[a4,b4]=deriv(c,k+dt*a3,h+dt*b3);
+    k+=dt/6*(a1+2*a2+2*a3+a4);h+=dt/6*(b1+2*b2+2*b3+b4)}
+  return out}
+// anos até percorrer metade da distância (em ln y) até o estado estacionário
+function half(c,k0,h0){const y1=ss(c).y,g0=Math.abs(Math.log(prod(c,k0,h0)/y1));if(g0<1e-6)return null;
+  const tr=sim(c,k0,h0,400,.25);
+  for(let i=1;i<tr.length;i++){const gp=Math.abs(Math.log(tr[i-1].y/y1)),gi=Math.abs(Math.log(tr[i].y/y1));if(gi<=g0/2)return tr[i-1].t+(gp-g0/2)/(gp-gi)*.25}
+  return Infinity}
+const argmax=(f,lo,hi)=>{const r=(Math.sqrt(5)-1)/2;let a=lo,b=hi,c=b-r*(b-a),d=a+r*(b-a);
+  for(let i=0;i<90;i++){if(f(c)>f(d))b=d;else a=c;c=b-r*(b-a);d=a+r*(b-a)}return(a+b)/2};
+
+// ---------- gráficos ----------
+const X0=60,X1=650,T0=22;
+const niceStep=x=>{const p=Math.pow(10,Math.floor(Math.log10(x))),m=x/p;return(m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p};
+const niceCeil=x=>{const s=niceStep(x/5);return Math.ceil(x/s-1e-9)*s};
+const niceRange=(lo,hi)=>{if(hi-lo<1e-9){lo-=.5;hi+=.5}const s=niceStep((hi-lo)/5);return[Math.floor(lo/s+1e-9)*s,Math.ceil(hi/s-1e-9)*s]};
+const ticks=(lo,hi)=>{const s=niceStep((hi-lo)/5),out=[];for(let v=Math.ceil(lo/s-1e-9)*s;v<=hi+s*1e-6;v+=s)out.push(Math.abs(v)<s*1e-9?0:v);return out};
+const fn=(v,d=2)=>v.toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:d});
+const fx=(v,d=2)=>v.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=(v,d=1)=>fx(v*100,d)+"%";
+function frame(o){const H=o.H||364,B0=H-44,xmin=o.xmin||0,ymin=o.ymin||0;
+  const px=x=>X0+(x-xmin)/(o.xmax-xmin)*(X1-X0),py=y=>B0-(y-ymin)/(o.ymax-ymin)*(B0-T0);
+  let s=`<defs><clipPath id="${o.id}c"><rect x="${X0}" y="${T0}" width="${X1-X0}" height="${B0-T0}"/></clipPath></defs>`;
+  for(const v of ticks(ymin,o.ymax))s+=`<line x1="${X0}" x2="${X1}" y1="${py(v)}" y2="${py(v)}" class="grid"/><text x="${X0-8}" y="${py(v)+4}" text-anchor="end">${(o.yf||fn)(v)}</text>`;
+  for(const v of ticks(xmin,o.xmax))s+=`<text x="${px(v)}" y="${B0+18}" text-anchor="middle">${(o.xf||fn)(v)}</text>`;
+  if(ymin<0)s+=`<line x1="${X0}" x2="${X1}" y1="${py(0)}" y2="${py(0)}" class="ax" stroke-width=".75"/>`;
+  s+=`<line x1="${X0}" y1="${B0}" x2="${X1}" y2="${B0}" class="ax"/><line x1="${X0}" y1="${T0}" x2="${X0}" y2="${B0}" class="ax"/>`;
+  s+=`<text x="${X1}" y="${H-6}" text-anchor="end">${o.xl}</text><text x="${X0+4}" y="14">${o.yl}</text>`;
+  return{px,py,B0,xmin,ymin,xmax:o.xmax,ymax:o.ymax,s,clip:`clip-path="url(#${o.id}c)"`}}
+const inside=(F,[x,y])=>x>=F.xmin&&x<=F.xmax&&y>=F.ymin&&y<=F.ymax;
+function path(F,pts,cls){const r=F.ymax-F.ymin,cl=y=>Math.max(F.ymin-2*r,Math.min(F.ymax+2*r,y));
+  return `<path d="M${pts.filter(p=>Number.isFinite(p[1])).map(([x,y])=>F.px(x).toFixed(1)+","+F.py(cl(y)).toFixed(1)).join("L")}" class="${cls}" fill="none"/>`}
+// rótulo no último ponto visível da curva
+function endLab(F,pts,txt,dy=-6){for(let i=pts.length-1;i>=0;i--)if(inside(F,pts[i])){const x=F.px(pts[i][0]),y=F.py(pts[i][1]);
+  return `<text x="${x>X1-60?x-4:x+4}" y="${Math.max(T0+12,y+dy)}" text-anchor="${x>X1-60?"end":"start"}">${txt}</text>`}return ""}
+const dot=(F,x,y,cls,r=4)=>inside(F,[x,y])?`<circle cx="${F.px(x)}" cy="${F.py(y)}" r="${r}" class="${cls}"/>`:"";
+const leg=items=>items.map(([cls,t])=>`<span><svg width="28" height="8"><line x1="1" y1="4" x2="27" y2="4" class="${cls}"/></svg>${t}</span>`).join("");
+const unit=m=>m=="bas"?"por trabalhador":"por trabalhador efetivo";
+const row=(n,va,vb,f,tol)=>`<div>${n}: <b>${f(va)}</b> → <b>${f(vb)}</b> (${Math.abs(vb-va)<tol?"não muda":vb>va?"sobe":"cai"})</div>`;
+const same=(x,y)=>Math.abs(x-y)<1e-12;
+
+// ---------- aba Diagrama ----------
+function tabDia(A,B,mode){
+  const moved=Math.abs(B.ss.k-A.ss.k)>1e-6*A.ss.k||Math.abs(B.ss.h-A.ss.h)>1e-6*A.ss.h;
+  let s,leg_;
+  if(!B.c.hc){
+    const fk=(c,k)=>Math.pow(k,c.a),kmax=niceCeil(2*Math.max(A.ss.k,B.ss.k)),ymax=niceCeil(1.05*Math.max(fk(A.c,kmax),fk(B.c,kmax)));
+    const F=frame({id:"dg",xmax:kmax,ymax,xl:`k (capital ${unit(mode)})`,yl:`y, investimento e reposição (${unit(mode)})`});
+    const ks=[...Array(241).keys()].map(i=>kmax*i/240);
+    const cv=X=>({f:ks.map(k=>[k,fk(X.c,k)]),i:ks.map(k=>[k,X.c.sk*fk(X.c,k)]),r:ks.map(k=>[k,X.ss.nk*k])});
+    const ca=cv(A),cb=cv(B),ch={f:!same(A.c.a,B.c.a),i:!same(A.c.a,B.c.a)||!same(A.c.sk,B.c.sk),r:!same(A.ss.nk,B.ss.nk)};
+    const RL=mode=="bas"?"(n+δ)·k":"(n+g+δ)·k";
+    s=F.s+`<g ${F.clip}>`+path(F,ca.f,"c-f d")+path(F,ca.i,"c-s d")+path(F,ca.r,"c-r d");
+    if(ch.f)s+=path(F,cb.f,"c-f w1");if(ch.i)s+=path(F,cb.i,"c-s w");if(ch.r)s+=path(F,cb.r,"c-r w");
+    for(const X of moved?[A,B]:[A])s+=`<line x1="${F.px(X.ss.k)}" x2="${F.px(X.ss.k)}" y1="${F.py(X.c.sk*X.ss.y)}" y2="${F.B0}" class="drop"/>`;
+    // c* = distância entre f(k*) e s·f(k*)
+    const xc=F.px(B.ss.k);s+=`<line x1="${xc}" x2="${xc}" y1="${F.py(B.ss.y)}" y2="${F.py(B.c.sk*B.ss.y)}" class="br"/>`;
+    s+=`</g><text x="${xc+6}" y="${(F.py(B.ss.y)+F.py(B.c.sk*B.ss.y))/2+4}">c*</text>`;
+    s+=endLab(F,ch.f?cb.f:ca.f,"f(k)")+endLab(F,ch.i?cb.i:ca.i,"s·f(k)",14)+endLab(F,ch.r?cb.r:ca.r,RL);
+    s+=dot(F,A.ss.k,A.c.sk*A.ss.y,"p0");if(moved)s+=dot(F,B.ss.k,B.c.sk*B.ss.y,"p1",4.5);
+    const kl=(X,t,dx,an)=>`<text x="${F.px(X.ss.k)+dx}" y="${F.B0-6}" text-anchor="${an}">${t}</text>`;
+    s+=moved?kl(A,"k*₀",B.ss.k>A.ss.k?-4:4,B.ss.k>A.ss.k?"end":"start")+kl(B,"k*₁",B.ss.k>A.ss.k?4:-4,B.ss.k>A.ss.k?"start":"end"):kl(A,"k*",4,"start");
+    leg_=[["c-s w","s·f(k): investimento"],["c-r w",RL+": reposição"],["c-f w1","f(k): produção"],["c-g d","ponto de partida (tracejado)"]];
+  }else{
+    const kmax=niceCeil(2*Math.max(A.ss.k,B.ss.k)),hmax=niceCeil(2*Math.max(A.ss.h,B.ss.h));
+    const F=frame({id:"dg",xmax:kmax,ymax:hmax,xl:"k (capital físico por trabalhador efetivo)",yl:"h (capital humano por trabalhador efetivo)"});
+    const ks=[...Array(241).keys()].map(i=>kmax*(i+.5)/240);
+    // k̇ = 0: sₖ k^α h^β = (n+g+δₖ) k ;  ḣ = 0: sₕ k^α h^β = (n+g+δₕ) h
+    const lo=X=>({k:ks.map(k=>[k,Math.pow(X.ss.nk*Math.pow(k,1-X.c.a)/X.c.sk,1/X.c.b)]),h:ks.map(k=>[k,Math.pow(X.c.sh*Math.pow(k,X.c.a)/X.ss.nh,1/(1-X.c.b))])});
+    const la=lo(A),lb=lo(B),chk=la.k.some((p,i)=>Math.abs(p[1]-lb.k[i][1])>1e-9*hmax),chh=la.h.some((p,i)=>Math.abs(p[1]-lb.h[i][1])>1e-9*hmax);
+    s=F.s+`<g ${F.clip}>`+path(F,la.k,"c-s d")+path(F,la.h,"c-h d");
+    if(chk)s+=path(F,lb.k,"c-s w");if(chh)s+=path(F,lb.h,"c-h w");
+    if(moved)s+=path(F,sim(B.c,A.ss.k,A.ss.h,150,.5).map(p=>[p.k,p.h]),"c-g dot");
+    s+=`</g>`+endLab(F,chk?lb.k:la.k,"k̇ = 0")+endLab(F,chh?lb.h:la.h,"ḣ = 0",16);
+    s+=dot(F,A.ss.k,A.ss.h,"p0");if(moved)s+=dot(F,B.ss.k,B.ss.h,"p1",4.5);
+    s+=inside(F,[A.ss.k,A.ss.h])?`<text x="${F.px(A.ss.k)-8}" y="${F.py(A.ss.h)+16}" text-anchor="end">E₀</text>`:"";
+    if(moved&&inside(F,[B.ss.k,B.ss.h]))s+=`<text x="${F.px(B.ss.k)+8}" y="${F.py(B.ss.h)-8}">E₁</text>`;
+    leg_=[["c-s w","k̇ = 0: capital físico parado"],["c-h w","ḣ = 0: capital humano parado"],["c-g dot","trajetória de transição"],["c-g d","ponto de partida (tracejado)"]];
+  }
+  $("sv_dia").innerHTML=s;$("leg_dia").innerHTML=leg(leg_);
+  // cartão
+  const u=unit(mode);let h=row(`Capital físico (k*, ${u})`,A.ss.k,B.ss.k,fx,5e-4);
+  if(B.c.hc)h+=row(`Capital humano (h*, ${u})`,A.ss.h,B.ss.h,fx,5e-4);
+  h+=row(`Renda (y*, ${u})`,A.ss.y,B.ss.y,fx,5e-4)+row(`Consumo (c*, ${u})`,A.ss.c,B.ss.c,fx,5e-4);
+  h+=`<p>No longo prazo, a renda por trabalhador cresce ${pct(B.c.g)} ao ano e o PIB total, ${pct(B.c.n+B.c.g)}.</p>`;
+  if(moved){const hl=half(B.c,A.ss.k,A.ss.h),g0=sim(B.c,A.ss.k,A.ss.h,0,1)[0].gy,up=B.ss.y>A.ss.y;
+    const mech=B.c.hc?`No estado estacionário antigo (E₀), a poupança ${up?"passa a superar a":"fica abaixo da"} reposição, e k e h se ajustam pela trajetória pontilhada até E₁.`
+      :`No k* antigo, o investimento s·f(k) ${up?"passa a superar a":"fica abaixo da"} reposição ${mode=="bas"?"(n+δ)·k":"(n+g+δ)·k"}, então o capital ${unit(mode)} ${up?"se acumula":"cai"} até o novo k*.`;
+    h+=`<p>${mech} Logo após a mudança, a renda por trabalhador cresce ${pct(g0)} ao ano (no longo prazo, ${pct(B.c.g)}). Metade do caminho até o novo estado estacionário é percorrida em ${hl==null?"—":hl===Infinity?"mais de 400 anos":"cerca de "+fn(hl,0)+" anos"}.</p>`;}
+  return h;
+}
+
+// ---------- aba Regra de ouro ----------
+function tabOuro(A,B,mode){
+  const hc=B.c.hc,cS=(X,sk,sh)=>ss({...X.c,sk,sh}).c;
+  const cvK=X=>[...Array(199).keys()].map(i=>{const s=(1-X.c.sh)*(i+1)/200;return[s,cS(X,s,X.c.sh)]});
+  const cvH=X=>[...Array(199).keys()].map(i=>{const s=(1-X.c.sk)*(i+1)/200;return[s,cS(X,X.c.sk,s)]});
+  const gk=X=>argmax(s=>cS(X,s,X.c.sh),1e-4,1-X.c.sh-1e-4),gh=X=>argmax(s=>cS(X,X.c.sk,s),1e-4,1-X.c.sk-1e-4);
+  const ka=cvK(A),kb=cvK(B),ha=hc?cvH(A):[],hb=hc?cvH(B):[];
+  const chg=!same(A.c.a,B.c.a)||!same(A.c.b,B.c.b)||!same(A.ss.nk,B.ss.nk)||!same(A.ss.nh,B.ss.nh)||!same(A.c.sh,B.c.sh)||!same(A.c.sk,B.c.sk);
+  const ymax=niceCeil(1.12*Math.max(...[...ka,...kb,...ha,...hb].map(p=>p[1])));
+  const F=frame({id:"go",xmax:1,ymax,xl:"taxa de poupança",yl:`consumo de estado estacionário (c*, ${unit(mode)})`,xf:v=>pct(v,0)});
+  const sgk=gk(B),sgh=hc?gh(B):0;
+  let s=F.s+`<g ${F.clip}>`;
+  if(chg){s+=path(F,ka,"c-s d");if(hc)s+=path(F,ha,"c-h d")}
+  s+=path(F,kb,"c-s w");if(hc)s+=path(F,hb,"c-h w");
+  s+=`<line x1="${F.px(sgk)}" x2="${F.px(sgk)}" y1="${F.py(cS(B,sgk,B.c.sh))}" y2="${F.B0}" class="drop"/>`;
+  s+=`</g>`;
+  if(chg&&!same(A.c.sk,B.c.sk))s+=dot(F,A.c.sk,A.ss.c,"p0");
+  s+=dot(F,sgk,cS(B,sgk,B.c.sh),"pg",5.5)+dot(F,B.c.sk,B.ss.c,"p1",4.5);
+  if(hc)s+=dot(F,sgh,cS(B,B.c.sk,sgh),"pg",5.5)+dot(F,B.c.sh,B.ss.c,"p1",4.5);
+  // rótulos "ouro": com capital humano, um para cada curva, abertos para lados opostos
+  const gl=(x,y,t,an)=>`<text x="${F.px(x)+(an=="end"?-6:an=="start"?6:0)}" y="${Math.max(T0+12,F.py(y)-12)}" text-anchor="${an}">${t}</text>`;
+  s+=hc?gl(sgk,cS(B,sgk,B.c.sh),"ouro (sₖ)",sgk<=sgh?"end":"start")+gl(sgh,cS(B,B.c.sk,sgh),"ouro (sₕ)",sgk<=sgh?"start":"end"):gl(sgk,cS(B,sgk,B.c.sh),"regra de ouro","middle");
+  $("sv_ouro").innerHTML=s;
+  $("leg_ouro").innerHTML=leg([["c-s w",hc?"variando sₖ (sₕ fixo)":"c* para cada s"],...(hc?[["c-h w","variando sₕ (sₖ fixo)"]]:[]),["c-g d","ponto de partida (tracejado)"]])+`<span><svg width="14" height="14"><circle cx="7" cy="7" r="5" class="pg"/></svg>regra de ouro</span><span><svg width="14" height="14"><circle cx="7" cy="7" r="4.5" class="p1"/></svg>situação atual</span>`;
+  // cartão
+  const cg=cS(B,sgk,B.c.sh),gap=B.c.sk-sgk;
+  let h=`<div>Poupança${hc?" em capital físico":""}: <b>${pct(B.c.sk)}</b> · regra de ouro${hc?" (com sₕ atual)":""}: <b>${pct(sgk)}</b></div>`;
+  h+=`<div>Consumo de estado estacionário: <b>${fx(B.ss.c)}</b> · na regra de ouro: <b>${fx(cg)}</b>${B.ss.c<cg-5e-4?` (${fn((cg/B.ss.c-1)*100,1)}% maior)`:""}</div>`;
+  h+=`<p>${Math.abs(gap)<.005?"A economia está praticamente na regra de ouro: nenhuma outra taxa de poupança dá mais consumo no longo prazo."
+    :gap<0?"A economia poupa menos que a regra de ouro. Aumentar a poupança reduz o consumo agora, mas eleva o consumo de longo prazo."
+    :"A economia poupa mais que a regra de ouro (ineficiência dinâmica). Reduzir a poupança aumenta o consumo agora e também no longo prazo."}</p>`;
+  h+=hc?`<p>Com as duas taxas livres, a regra de ouro é sₖ = α = ${pct(B.c.a,0)} e sₕ = β = ${pct(B.c.b,0)}. Fixando sₖ atual, o melhor sₕ é ${pct(sgh)}.</p>`
+    :`<p>Com Cobb-Douglas, a regra de ouro é s = α = ${pct(B.c.a,0)}: o produto marginal do capital iguala ${mode=="bas"?"n+δ":"n+g+δ"}.</p>`;
+  return h;
+}
+
+// ---------- aba Convergência ----------
+function tabConv(p,mode){
+  const cA=core(p,mode),cB=core({...p,s:p.sB,sh:p.shB,n:p.nB},mode),sA=ss(cA),sB=ss(cB),T=100,dt=.25;
+  const A=sim(cA,p.kA/100*sA.k,p.kA/100*sA.h,T,dt),B=sim(cB,p.kB/100*sA.k,p.kB/100*sA.h,T,dt);
+  const lA=A.map(q=>[q.t,q.lny]),lB=B.map(q=>[q.t,q.lny]),gA=A.map(q=>[q.t,q.gy*100]),gB=B.map(q=>[q.t,q.gy*100]);
+  const all=[...lA,...lB].map(q=>q[1]),[y0,y1]=niceRange(Math.min(...all),Math.max(...all));
+  const F1=frame({id:"c1",H:300,xmax:T,ymin:y0,ymax:y1,xl:"anos",yl:"ln da renda por trabalhador"});
+  let s=F1.s+`<g ${F1.clip}>`+path(F1,lA,"c-s w")+path(F1,lB,"c-r w")+`</g>`+endLab(F1,lA,"A",-8)+endLab(F1,lB,"B",16);
+  $("sv_conv1").innerHTML=s;
+  const gs=[...gA,...gB].map(q=>q[1]);let [g0,g1]=niceRange(Math.min(0,...gs),Math.min(20,Math.max(cA.g*100+1,...gs)));
+  const F2=frame({id:"c2",H:260,xmax:T,ymin:g0,ymax:g1,xl:"anos",yl:"crescimento da renda por trabalhador (% ao ano)"});
+  s=F2.s+`<g ${F2.clip}>`+path(F2,[[0,cA.g*100],[T,cA.g*100]],"c-g d")+path(F2,gA,"c-s w")+path(F2,gB,"c-r w")+`</g>`;
+  $("sv_conv2").innerHTML=s;
+  $("leg_conv").innerHTML=leg([["c-s w","país A"],["c-r w","país B"],["c-g d",`crescimento de longo prazo (g = ${pct(cA.g)})`]]);
+  // cartão
+  const ratio=t=>Math.exp(B[Math.round(t/dt)].lny-A[Math.round(t/dt)].lny),sameP=same(p.sB,p.s)&&same(p.nB,p.n)&&(!cA.hc||same(p.shB,p.sh)),rel=sB.y/sA.y;
+  const hB=half(cB,p.kB/100*sA.k,p.kB/100*sA.h);
+  let h=`<div>Renda de estado estacionário (${unit(mode)}): A <b>${fx(sA.y)}</b> · B <b>${fx(sB.y)}</b> (${fn(rel*100,0)}% de A)</div>`;
+  h+=`<div>Crescimento no ano 0: A <b>${pct(A[0].gy)}</b> · B <b>${pct(B[0].gy)}</b></div>`;
+  h+=`<div>Renda por trabalhador de B em relação a A: ${[0,25,50,100].map(t=>`ano ${t}: <b>${fn(ratio(t)*100,0)}%</b>`).join(" · ")}</div>`;
+  h+=`<p>${sameP?"Convergência absoluta: os dois países têm os mesmos parâmetros e o mesmo estado estacionário. Quem começa com menos capital cresce mais rápido e alcança o outro."
+    :`Convergência condicional: B converge para o próprio estado estacionário, que corresponde a ${fn(rel*100,0)}% da renda de A. A diferença de renda não some; ela tende a esse valor${same(p.nB,p.n)?"":" (com n diferente, as rendas por trabalhador de longo prazo diferem, mas crescem à mesma taxa g)"}.`}
+    ${hB==null?"":` B percorre metade da distância até o seu estado estacionário em ${hB===Infinity?"mais de 400":"cerca de "+fn(hB,0)} anos.`}</p>`;
+  return h;
+}
+
+function render(){
+  const mode=rv("mode"),tab=rv("tab"),cur=read();
+  const bmax=Math.max(.05,+BMAX(cur.a).toFixed(2));if(+$("b").max!==bmax){$("b").max=bmax;cur.b=+$("b").value}
+  document.querySelectorAll("#ctl [data-m]").forEach(e=>{const m=e.dataset.m,t=e.dataset.t;e.hidden=!!(m&&!m.split(" ").includes(mode))||!!(t&&!t.split(" ").includes(tab))});
+  ids.forEach(i=>{$("l_"+i).textContent=mode=="hc"&&LBL_HC[i]?LBL_HC[i]:LBL[i];const v=cur[i];$("o_"+i).textContent=fmts[i]=="p"?pct(v):fmts[i]=="%"?v+"%":fn(v)});
+  $("modenote").textContent=MODEN[mode];$("hint").textContent=HINT[tab];
+  for(const t of["dia","ouro","conv"])$("v_"+t).hidden=t!=tab;
+  const mk=p=>{const c=core(p,mode);return{c,ss:ss(c)}},A=mk(base),B=mk(cur);
+  let h=tab=="dia"?tabDia(A,B,mode):tab=="ouro"?tabOuro(A,B,mode):tabConv(cur,mode);
+  if(mode=="hc"&&cur.a+cur.b>.9+1e-9)h+=`<p class="warn"><b>Atenção:</b> α + β precisa ser menor que 1; β foi limitado a ${fn(BMAX(cur.a))}.</p>`;
+  $("res").innerHTML=h;
+}
+ids.forEach(i=>$(i).addEventListener("input",render));
+document.querySelectorAll("input[type=radio]").forEach(e=>e.addEventListener("change",render));
+$("fix").onclick=()=>{base=read();render()};
+$("rst").onclick=()=>{ids.forEach(i=>$(i).value=def[i]);base={...def};render()};
+render();
+</script>
+</body>
+</html>
