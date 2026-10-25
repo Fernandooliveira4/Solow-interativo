@@ -48,10 +48,32 @@ svg text{fill:var(--fg);font-size:13px}
 .p0{fill:var(--card);stroke:var(--mut);stroke-width:1.5}
 .p1{fill:var(--fg)}
 .pg{fill:var(--card);stroke:var(--fg);stroke-width:2}
+.pgbar{max-width:1080px;margin:0 auto;padding:16px 16px 0}
+.pgbar .seg{max-width:260px;margin-left:auto}
+.pgbar+main{padding-top:12px}
+.teo{max-width:760px;margin:0 auto;padding:12px 16px 32px}
+.teo h1{margin-bottom:8px}
+.teo h2{font-size:17px;margin:28px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.teo h3{font-size:15px;margin:18px 0 4px}
+.teo p,.teo li{color:var(--fg);font-size:15px;line-height:1.6}
+.teo p{margin:8px 0}
+.teo .lead{color:var(--mut);font-size:16px}
+.teo ul{margin:8px 0;padding-left:22px}
+.teo li{margin:6px 0}
+.teo .sim{display:block;color:var(--mut);font-size:14px;margin-top:2px}
+.teo .ref li{color:var(--mut);font-size:14px}
+.eq{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 16px;margin:10px 0;font:16px/1.7 "Cambria Math",Cambria,"STIX Two Math","Times New Roman",serif;overflow-x:auto}
+.eq div{white-space:nowrap}
+.eq span{font:13px system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--mut);margin-left:12px}
+@media(max-width:560px){.eq{font-size:15px}.eq div{white-space:normal;padding-left:1em;text-indent:-1em}.eq span{display:block;margin-left:0;text-indent:0}}
 </style>
 </head>
 <body>
-<main>
+<div class="pgbar"><div class="seg" role="radiogroup" aria-label="Página">
+<label><input type="radio" name="pg" value="sim" checked>Simulador</label>
+<label><input type="radio" name="pg" value="teo">Teoria</label>
+</div></div>
+<main id="sim">
 <section>
 <h1>Modelo de Solow</h1>
 <p id="hint"></p>
@@ -80,6 +102,76 @@ svg text{fill:var(--fg);font-size:13px}
 </div>
 </aside>
 </main>
+<article id="teo" class="teo" hidden>
+<h1>Teoria: modelo de Solow</h1>
+<p class="lead">O modelo de Solow explica o crescimento de longo prazo da renda por trabalhador pela acumulação de capital e pelo progresso técnico. Ele mostra por que a poupança muda o nível da renda e não a taxa de crescimento de longo prazo, e por que países com fundamentos parecidos tendem a convergir.</p>
+
+<h2>Ideia central</h2>
+<p>Uma fração s da produção é poupada e investida em capital. O capital por trabalhador cresce enquanto o investimento supera o necessário para repor a depreciação e equipar os novos trabalhadores. Com retornos decrescentes, cada unidade a mais de capital rende menos produto, e a economia chega a um estado estacionário em que o capital por trabalhador efetivo para de crescer. A partir daí, a renda por trabalhador só cresce com o progresso técnico, que o modelo toma como dado.</p>
+
+<h2>Hipóteses</h2>
+<ul>
+<li>Um único bem, usado para consumo e investimento; economia fechada.</li>
+<li>Função de produção Cobb-Douglas, com retornos constantes de escala e retornos decrescentes em cada fator.</li>
+<li>Taxa de poupança s constante e exógena: as famílias não escolhem quanto poupar, ao contrário do modelo de Ramsey.</li>
+<li>População crescendo a n, depreciação δ e progresso técnico aumentador de trabalho crescendo a g, todos exógenos.</li>
+<li>Mercados competitivos e pleno emprego dos fatores.</li>
+</ul>
+
+<h2>Equações</h2>
+<p>Com as variáveis por trabalhador efetivo, k = K/(AL) e y = Y/(AL):</p>
+<div class="eq">
+<div>Y = K^α·(AL)^(1−α), então y = k^α</div>
+<div>dk/dt = s·k^α − (n + g + δ)·k</div>
+<div>k* = (s/(n + g + δ))^(1/(1−α))</div>
+<div>y* = (s/(n + g + δ))^(α/(1−α))</div>
+</div>
+<p>O termo s·k^α é o investimento, e (n + g + δ)·k é o investimento necessário para manter k constante. O estado estacionário k* está onde os dois se igualam. O consumo de estado estacionário é c* = (1 − s)·y*.</p>
+<div class="eq">
+<div>Regra de ouro: f′(k*) = n + g + δ, ou seja, s = α</div>
+<div>Velocidade de convergência: λ = (1 − α)·(n + g + δ)</div>
+<div>Meia-vida: ln 2 / λ</div>
+</div>
+
+<h2>As três versões</h2>
+<h3>Básico</h3>
+<p>Y = K^α·L^(1−α), sem progresso técnico (g = 0). No estado estacionário a renda por trabalhador fica constante: o crescimento de longo prazo é zero.</p>
+<h3>Com tecnologia</h3>
+<p>Y = K^α·(AL)^(1−α), com A crescendo a g. Em crescimento equilibrado, k e y ficam constantes, e a renda e o capital por trabalhador crescem a g. A relação capital-produto fica constante.</p>
+<h3>Capital humano</h3>
+<p>Y = K^α·H^β·(AL)^(1−α−β), com α + β &lt; 1. O capital humano é acumulado como o físico, com uma fração sₕ da produção (Acemoglu, cap. 3; Mankiw, Romer e Weil, 1992):</p>
+<div class="eq">
+<div>dk/dt = sₖ·y − (n + g + δₖ)·k</div>
+<div>dh/dt = sₕ·y − (n + g + δₕ)·h</div>
+<div>y* = (sₖ^α·sₕ^β / ((n + g + δₖ)^α·(n + g + δₕ)^β))^(1/(1−α−β))</div>
+</div>
+<p>Como os dois capitais se acumulam, os retornos decrescentes chegam mais devagar. A regra de ouro passa a ser sₖ = α e sₕ = β, e, com as duas depreciações iguais, a velocidade de convergência cai para (1 − α − β)·(n + g + δ).</p>
+
+<h2>Resultados principais</h2>
+<ul>
+<li><b>A poupança muda o nível, não o crescimento de longo prazo.</b> Uma alta de s eleva k* e y*. Durante a transição a economia cresce mais rápido, mas no longo prazo a renda por trabalhador volta a crescer a g.<span class="sim">No simulador: aba Diagrama, aumente s e veja o novo estado estacionário.</span></li>
+<li><b>Efeito pequeno da poupança.</b> A elasticidade de y* em relação a s é α/(1 − α), cerca de 0,5 com α = 1/3. Diferenças de poupança explicam pouco das grandes diferenças de renda entre países.</li>
+<li><b>Crescimento populacional.</b> Um n maior reduz k* e y*: o investimento precisa equipar mais trabalhadores novos.</li>
+<li><b>Regra de ouro.</b> O consumo de estado estacionário é máximo com s = α. Poupar acima disso é ineficiência dinâmica: reduzir a poupança aumenta o consumo agora e no longo prazo.<span class="sim">No simulador: aba Regra de ouro.</span></li>
+<li><b>Convergência condicional.</b> Cada país converge para o seu próprio estado estacionário, e quem está mais longe dele cresce mais rápido. Países com a mesma poupança, população e tecnologia convergem para a mesma renda (convergência absoluta); com parâmetros diferentes, não.<span class="sim">No simulador: aba Convergência.</span></li>
+<li><b>Capital humano.</b> A elasticidade de y* em relação a sₖ sobe para α/(1 − α − β). Com α e β perto de 1/3, Mankiw, Romer e Weil (1992) explicam a maior parte das diferenças de renda entre países com diferenças de poupança, educação e crescimento populacional.</li>
+</ul>
+
+<h2>Limitações</h2>
+<ul>
+<li>O progresso técnico g é exógeno: o modelo não explica de onde vem o crescimento de longo prazo. Os modelos de crescimento endógeno, como o de Romer, tratam disso.</li>
+<li>A poupança é exógena. No modelo de Ramsey (Acemoglu, cap. 8), ela sai da escolha das famílias, e a regra de ouro modificada substitui a regra de ouro.</li>
+<li>O Acemoglu (cap. 3) mostra que, quando o capital humano é medido pelos retornos da educação, as diferenças de capital explicam bem menos as diferenças de renda, e sobra uma grande parte para as diferenças de produtividade.</li>
+<li>Economia fechada, um só bem e uma função de produção agregada Cobb-Douglas são simplificações fortes.</li>
+</ul>
+
+<h2>Referências</h2>
+<ul class="ref">
+<li>Acemoglu, D. <i>Introduction to Modern Economic Growth</i>. Princeton: Princeton University Press, 2009. Cap. 2 (o modelo de Solow) e cap. 3 (o modelo de Solow e os dados, incluindo o capital humano).</li>
+<li>Solow, R. M. A contribution to the theory of economic growth. <i>Quarterly Journal of Economics</i>, v. 70, n. 1, p. 65–94, 1956.</li>
+<li>Mankiw, N. G.; Romer, D.; Weil, D. N. A contribution to the empirics of economic growth. <i>Quarterly Journal of Economics</i>, v. 107, n. 2, p. 407–437, 1992.</li>
+</ul>
+</article>
 <footer>Fernando Almeida Sousa Oliveira</footer>
 <script>
 // [id, rótulo, mín, máx, passo, padrão, formato, versões em que aparece, abas em que aparece]; cabeçalhos: [título, versões, abas]
@@ -304,6 +396,13 @@ document.querySelectorAll("input[type=radio]").forEach(e=>e.addEventListener("ch
 $("fix").onclick=()=>{base=read();render()};
 $("rst").onclick=()=>{ids.forEach(i=>$(i).value=def[i]);base={...def};render()};
 render();
+</script>
+<script>
+// página: simulador ou teoria (o endereço com #teoria abre direto na teoria)
+(()=>{const sw=v=>{document.getElementById("sim").hidden=v!="sim";document.getElementById("teo").hidden=v=="sim"};
+document.querySelectorAll("input[name=pg]").forEach(e=>e.addEventListener("change",()=>{sw(e.value);scrollTo(0,0);
+  try{history.replaceState(null,"",e.value=="teo"?"#teoria":location.pathname+location.search)}catch(_){}}));
+if(location.hash=="#teoria"){document.querySelector("input[name=pg][value=teo]").checked=true;sw("teo")}})();
 </script>
 </body>
 </html>

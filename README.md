@@ -6,6 +6,7 @@ Simulador do modelo de crescimento de Solow, em HTML puro (basta abrir `solow.ht
 - **Diagrama:** s·f(k) contra a reposição, ou diagrama de fases (k, h) na versão com capital humano, com o ponto de partida, o novo estado estacionário e a meia-vida da transição.
 - **Regra de ouro:** consumo de estado estacionário para cada taxa de poupança.
 - **Convergência:** dois países com a mesma tecnologia partindo de níveis de capital diferentes (convergência absoluta e condicional).
+- **Teoria:** o seletor *Simulador | Teoria* no topo abre um resumo do modelo (ideia central, hipóteses, equações, as três versões, resultados, limitações e referências), com base no Acemoglu, caps. 2 e 3. O endereço terminado em `#teoria` abre direto nessa aba.
 
 ## Versões
 

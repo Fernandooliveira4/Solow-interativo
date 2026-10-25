@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## v1.1.0 (2026-10-25)
+- Aba Teoria: resumo do modelo (ideia central, hipóteses, equações, versões, resultados, limitações e referências), aberta pelo seletor Simulador | Teoria ou pelo endereço #teoria
+
 ## v1.0.2 (2026-10-25)
 - Ícone próprio na aba do navegador
 
