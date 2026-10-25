@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## v1.0.2 (2026-10-25)
+- Ícone próprio na aba do navegador
+
 ## v1.0.1 (2026-10-20)
 - Adiciona autoria (Fernando Almeida Sousa Oliveira) no rodapé
 
